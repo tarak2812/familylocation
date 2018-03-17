@@ -10,8 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import familylocation.bhulijyo.com.familylocation.dummy.DummyContent;
-
 
 public class FriendsFragment extends Fragment {
 
@@ -60,7 +58,9 @@ public class FriendsFragment extends Fragment {
             } else {
                 recyclerView.setLayoutManager(new GridLayoutManager(context, mColumnCount));
             }
-            recyclerView.setAdapter(new MyFriendsRecyclerViewAdapter(DummyContent.ITEMS));
+
+            FriendsContent content = new FriendsContent();
+            recyclerView.setAdapter(new MyFriendsRecyclerViewAdapter(content.getFriends("tarakbhatt")));
         }
         return view;
     }
