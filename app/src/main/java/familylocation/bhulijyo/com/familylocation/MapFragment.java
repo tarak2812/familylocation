@@ -1,8 +1,12 @@
 package familylocation.bhulijyo.com.familylocation;
 
+import android.content.Context;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.Fragment;
 import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
 
 import com.amazonaws.mobile.auth.core.IdentityManager;
 import com.amazonaws.mobile.client.AWSMobileClient;
@@ -18,59 +22,75 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+public class MapFragment extends Fragment implements OnMapReadyCallback {
+    // TODO: Rename parameter arguments, choose names that match
+    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
+    private static final String ARG_PARAM1 = "param1";
+    private static final String ARG_PARAM2 = "param2";
     private GoogleMap mMap;
-    DynamoDBMapper dynamoDBMapper;
+
+    // TODO: Rename and change types of parameters
     static String TAG;
-    LocationsDO currentLocation ;
+
+    private LocationsDO currentLocation ;
+    DynamoDBMapper dynamoDBMapper;
+
+    public MapFragment() {
+        // Required empty public constructor
+    }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        TAG = MapsActivity.this.getClass().getName();
-        AWSMobileClient.getInstance().initialize(this).execute();
-        setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        TAG = MapFragment.this.getClass().getName();
 
+    }
+
+    private void updateLocationOnMap(final LatLng position, final String userName)
+    {
+        this.getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mMap.addMarker(new MarkerOptions().position(position).title(userName));
+                mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
+            }
+        });
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        View V = inflater.inflate(R.layout.maplocation_tab, container, false);
+
+
+
+        final IdentityManager identityManager = AWSProvider.getInstance().getIdentityManager();
         AmazonDynamoDBClient dynamoDBClient = new AmazonDynamoDBClient(AWSMobileClient.getInstance().getCredentialsProvider());
+
         this.dynamoDBMapper = DynamoDBMapper.builder()
                 .dynamoDBClient(dynamoDBClient)
                 .awsConfiguration(AWSMobileClient.getInstance().getConfiguration())
                 .build();
-
-        AWSProvider.initialize(this);
-        final IdentityManager identityManager = AWSProvider.getInstance().getIdentityManager();
         Runnable runnable = new Runnable() {
             public void run() {
 
                 currentLocation = getLocation("tarakbhatt");
                 // Add a marker in Sydney and move the camera
                 LatLng current = new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude());
-                MapsActivity.this.updateLocationOnMap(current);
+                MapFragment.this.updateLocationOnMap(current, "Tarak");
 
                 //LocationsDO locationItem = dynamoDBMapper.load(LocationsDO.class, "tarakbhatt", "Tarak"
-                        //);
+                //);
 
                 //Log.d(TAG, "Location Item: "+ locationItem.getLatitude().toString()+ locationItem.getLongitude().toString());
             }
         };
         Thread mythread = new Thread(runnable);
         mythread.start();
-    }
+        ((SupportMapFragment)getChildFragmentManager().findFragmentById(R.id.map)).getMapAsync(this);
 
-    private void updateLocationOnMap(final LatLng position)
-    {
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                mMap.addMarker(new MarkerOptions().position(position).title("Marker in Sydney"));
-                mMap.moveCamera(CameraUpdateFactory.newLatLng(position));
-            }
-        });
+        return V;
     }
 
     private LocationsDO getLocation(String userId)
@@ -88,19 +108,23 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
         return null;
     }
-    /**
-     * Manipulates the map once available.
-     * This callback is triggered when the map is ready to be used.
-     * This is where we can add markers or lines, add listeners or move the camera. In this case,
-     * we just add a marker near Sydney, Australia.
-     * If Google Play services is not installed on the device, the user will be prompted to install
-     * it inside the SupportMapFragment. This method will only be triggered once the user has
-     * installed Google Play services and returned to the app.
-     */
+
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        //this.getMapAsync(this);
+
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+    }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-
     }
+
+
 }
